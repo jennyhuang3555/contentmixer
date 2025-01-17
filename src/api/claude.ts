@@ -5,22 +5,29 @@ const anthropic = new Anthropic({
   dangerouslyAllowBrowser: true
 });
 
-export async function remixText(text: string): Promise<string> {
+export async function remixText(text: string): Promise<string[]> {
   try {
     const message = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 1000,
       temperature: 0.7,
-      system: "You are a creative assistant that helps remix and transform text in interesting ways.",
+      system: "You are a creative assistant that helps transform text into Twitter-friendly posts. Generate exactly 4 unique variations, each under 280 characters. Format each tweet on a new line, starting with 'Tweet 1:', 'Tweet 2:', etc.",
       messages: [
         {
           role: 'user',
-          content: `Please remix the following text in a creative and interesting way:\n\n${text}`,
+          content: `Create 4 different Twitter-friendly versions of this text:\n\n${text}`,
         },
       ],
     });
 
-    return message.content[0].text;
+    // Parse the response into an array of tweets
+    const content = message.content[0].text;
+    const tweets = content
+      .split(/Tweet \d+:/)
+      .filter(tweet => tweet.trim())
+      .map(tweet => tweet.trim());
+    
+    return tweets.slice(0, 4);
   } catch (error) {
     console.error('Error calling Claude API:', error);
     throw new Error('Failed to remix text');
